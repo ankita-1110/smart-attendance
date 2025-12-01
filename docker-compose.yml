@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart-attendance-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Option 1: Use environment variable for Firebase key (recommended for Docker)
+      # Uncomment the line below and set FIREBASE_KEY_BASE64 in your .env file or export it
+      - FIREBASE_KEY_BASE64=${FIREBASE_KEY_BASE64}
+    volumes:
+      # Option 2: Mount serviceAccountKey.json file (if file exists and is valid)
+      # If using FIREBASE_KEY_BASE64 env var, you can comment out this volume mount
+      - ./backend/serviceAccountKey.json:/app/serviceAccountKey.json:ro
+    restart: unless-stopped
+    networks:
+      - attendance-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smart-attendance-frontend
+    ports:
+      - "8080:80"  # Changed to 8080 so host nginx can use port 80
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - attendance-network
+
+networks:
+  attendance-network:
+    driver: bridge
+
